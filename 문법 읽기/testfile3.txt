@@ -1,0 +1,26 @@
+void func1(int arr[]){
+    printf("%d\n",arr[1]);
+    printf("%d\n",arr[2]);
+    printf("%d\n",arr[3]);
+    printf("%d\n",arr[4]);
+}
+
+int func(int arr[]){
+    printf("%d\n",arr[5]);
+    printf("%d\n",arr[6]);
+    return arr[7];
+}
+
+int main(){
+    printf("78056014\n");
+
+    int arr[9]={1, 2, 3, 4, 5, 6, 7, 8, 9};
+    printf("%d\n",arr[0]);
+
+    func1(arr);
+    int returnValue=func(arr);
+    printf("%d\n", returnValue);
+    const int constArr[9]={1, 2, 3, 4, 5, 6, 7, 8, 9};
+    printf("%d", constArr[8]);
+    return 0;
+}

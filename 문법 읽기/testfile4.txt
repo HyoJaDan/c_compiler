@@ -1,0 +1,37 @@
+
+
+void func2(int a,int b)
+{
+    printf("%d\n", a);
+    printf("%d\n", b);
+    return;
+}
+
+void func1(int a){
+    printf("%d\n", a);
+    return;
+}
+void func(){
+    printf("hello");
+    return;
+}
+
+void emptyFunc(){}
+int main(){
+    printf("78056014\n");
+
+    int a,b;
+    a=20;
+    b=10;
+
+    printf("%d\n", a + b);
+    printf("%d\n", a - b);
+    printf("%d\n", a * b);
+    printf("%d\n", a / b);
+    printf("%d\n", a % b);
+    emptyFunc();
+    func1(a);
+    func2(a,b);
+    func();
+    return 0;
+}

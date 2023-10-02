@@ -1,0 +1,33 @@
+const int a = 100;
+const int b = 100;
+const int c = 50;
+
+int main(){
+    printf("78056014\n");
+
+    if(a>=b){
+        printf("1\n");
+    }
+    else{
+        printf("0\n");
+    }
+    if(c<=a){
+        printf("2\n");
+    }
+    else{
+        printf("0\n");
+    }
+
+    int i = 0;
+    while(i!=6){
+        i = i + 1;
+        if(i == 2){
+            break;
+        }
+        else{
+            continue;
+        }
+    }
+
+    return 0;
+}

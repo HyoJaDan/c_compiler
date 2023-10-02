@@ -1,0 +1,38 @@
+int main(){
+  printf("78056014\n");
+
+  int a=5;
+  int b=10;
+  printf("%d\n",+a);
+  printf("%d\n",-a);
+  printf("%d\n",!a);
+
+  if(a>=b) { printf("a >= b\n"); }
+  else { printf("a >/= b\n"); }
+
+  if(a>b) { printf("a > b\n"); }
+  else { printf("a >/ b\n"); }
+
+  if(a<=b) { printf("a <= b\n"); }
+  if(a<b) { printf("a < b\n"); }
+
+    a=20;
+    b=10;
+    const int c=20;
+    const int d=10,e=30;
+    int temp=(a);
+    if(c == d){
+        printf("const int c: %d And const int d: %d is same\n", c,d);
+    }
+    else{
+        printf("const int c: %d And const int d: %d is not same\n", c,d);
+    }
+    if(a != b){
+         printf("int a: %d And int b: %d is not same", a,b);
+    }
+    else{
+        printf("int a: %d And int b: %d is same", a,b);
+    }
+
+    return 0;
+}

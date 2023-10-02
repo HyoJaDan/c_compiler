@@ -1,0 +1,11 @@
+int main(){
+    printf("78056014\n");
+
+    int num[10] = {2, 12, 4, 7, 92, 74, 17, 9, 44, 40};
+    int i, sum=0;
+
+    sum = num[0]+num[1]+num[2]+num[3];
+
+    printf("%d", sum);
+    return 0;
+}

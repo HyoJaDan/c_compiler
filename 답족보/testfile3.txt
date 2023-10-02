@@ -1,0 +1,24 @@
+void func(int a[]){
+    int i, j, sum = 0;
+
+    sum = a[0]+a[1]+a[2];
+    printf("%d\n", sum);
+}
+
+int main(){
+    printf("78056014\n");
+
+    int arr[3][3] = {{11,12,13}, {14,15,16}, {17,18,19}};
+    func(arr[0]);
+    func(arr[1]);
+    func(arr[2]);
+
+    printf("1\n");
+    printf("1\n");
+    printf("1\n");
+    printf("1\n");
+    printf("1\n");
+    printf("1");
+
+    return 0;
+}

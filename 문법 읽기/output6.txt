@@ -1,0 +1,10 @@
+78056014
+5
+-5
+0
+a >/= b
+a >/ b
+a <= b
+a < b
+const int c: 20 And const int d: 10 is not same
+int a: 20 And int b: 10 is not same
