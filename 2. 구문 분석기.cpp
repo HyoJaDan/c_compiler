@@ -4,13 +4,13 @@
 #include <fstream>
 using namespace std;
 
-ifstream fin("testfile.txt");
+FILE *inputFile;
 ofstream fout("output.txt");
 
 string mapList[10000][3];
 string token;
 string inputedString="";
-string couple[3] = {"", ""};
+string couple[2] = {"", ""};
 int inputedStringLength = 0;
 int top = 0;
 int wordCnt = 0;
@@ -32,24 +32,25 @@ void parseFuncRParams();
 
 void init()
 {
-    string line;
-    while(getline(fin,line))
-    {
-        inputedString += line;
-    }
-    inputedStringLength = inputedString.length();
+  char inputString[100];
+  inputFile = fopen("testfile.txt", "r");
+  while (fgets(inputString, sizeof(inputString), inputFile) != NULL)
+  {
+      inputedString += inputString;
+  }
+  inputedStringLength = inputedString.length();
 }
 
 bool parsingAnnotation() {
 	string temp = inputedString.substr(wordCnt, 1);
 	if(temp=="\n"||temp=="\r"||temp=="\t")
-        return true;
+		return true;
 	return false;
 }
 
 void skip() {
 	while(inputedString[wordCnt]==' ' ||parsingAnnotation()|| inputedString[wordCnt]=='	') {
-        wordCnt++;
+		wordCnt++;
 	}
 	return;
 }
@@ -65,11 +66,13 @@ void removeLineComment(){
 }
 void removeBlockComment(){
 	while(wordCnt<inputedStringLength)
-    {
-        if(inputedString[wordCnt]=='*'&&inputedString[wordCnt+1]=='/')
-            break;
-        wordCnt++;
+	{
+		if(inputedString[wordCnt]=='*'&&inputedString[wordCnt+1]=='/')
+			break;
+		wordCnt++;
 	}
+	if(wordCnt+2>=inputedStringLength)
+		return;
 	wordCnt += 2;
 }
 
@@ -287,15 +290,15 @@ void Lexical_Analysis_Main() {
 void Lexical_Analysis()
 {
 	while (wordCnt != inputedStringLength)
-	Lexical_Analysis_Main();
-	for (int i = 0; i < top;i++)
+		Lexical_Analysis_Main();
+
+	// Lexical부분 출력
+	/* for (int i = 0; i < top;i++)
 	{
-		/* fout << mapList[i][0] << " " << mapList[i][1] << endl; */
-		/* cout << mapList[i][0] << " " << mapList[i][1] << endl; */
-	}
+		fout << mapList[i][0] << " " << mapList[i][1] << endl;
+		cout << mapList[i][0] << " " << mapList[i][1] << endl;
+	} */
 }
-
-
 
 int Syntax_Analysis_Main(bool forward, bool withOutput = false)
 {
@@ -348,19 +351,19 @@ void primaryExp(){
 	else
 	{
 		// 2. number
-		try
+		if(couple[1][0]>='0'&&couple[1][0]<='9')
 		{
-			int num = stoi(couple[1]);
+			/* int num = stoi(couple[1]); */
 			Syntax_Analysis_Main(true, true);
 			cout << "<Number>" << endl;
 			fout << "<Number>" << endl;
 		}
-		catch (std::invalid_argument &e)
+		// 3. LVar
+		else 
 		{
-			// 3. LVar
 			parseLVal();
 		}
-		}
+	}
 	cout << "<PrimaryExp>" << endl;
 	fout << "<PrimaryExp>" << endl;
 }
@@ -726,8 +729,9 @@ void parseConstInitVal()
 			while(couple[0]!="RBRACE")
 			{
 				parseConstExp(); //a=b등 변수로 초기화되면 LVal, a=10처럼 숫자로 초기화 되면 number
-					cout << "<ConstInitVal>" << endl;
-					fout << "<ConstInitVal>" << endl;
+				cout << "<ConstInitVal>" << endl;
+				fout << "<ConstInitVal>" << endl;
+
 				if(couple[0]=="RBRACE")
 					break;
 
@@ -738,7 +742,7 @@ void parseConstInitVal()
 	}
 	else //일반 변수일 경우
 	{
-			parseConstExp();
+		parseConstExp();
 	}
 	fout << "<ConstInitVal>" << endl;
 	cout << "<ConstInitVal>" << endl;
@@ -1064,10 +1068,11 @@ void Syntax_Analysis(){
 }
 
 int main(void) {
-	init();
-	Lexical_Analysis();
-	Syntax_Analysis();
-	fin.close();
-	fout.close();
-	return 0;
+    init();
+  Lexical_Analysis();
+  Syntax_Analysis();
+
+  fclose(inputFile);
+  fout.close();
+  return 0;
 }
