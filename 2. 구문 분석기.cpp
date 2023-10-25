@@ -11,6 +11,7 @@ string mapList[10000][3];
 string token;
 string inputedString="";
 string couple[2] = {"", ""};
+
 int inputedStringLength = 0;
 int top = 0;
 int wordCnt = 0;
@@ -26,7 +27,7 @@ void parsePrint();
 void parseReturnStmt();
 void parseMainFunc();
 void parseBlock();
-void parseFuncParams();
+void parseFuncFParams();
 void parseLVal();
 void parseFuncRParams();
 
@@ -36,7 +37,7 @@ void init()
   inputFile = fopen("testfile.txt", "r");
   while (fgets(inputString, sizeof(inputString), inputFile) != NULL)
   {
-      inputedString += inputString;
+    inputedString += inputString;
   }
   inputedStringLength = inputedString.length();
 }
@@ -49,7 +50,7 @@ bool parsingAnnotation() {
 }
 
 void skip() {
-	while(inputedString[wordCnt]==' ' ||parsingAnnotation()|| inputedString[wordCnt]=='	') {
+	while(inputedString[wordCnt]==' ' ||parsingAnnotation()) {
 		wordCnt++;
 	}
 	return;
@@ -76,6 +77,7 @@ void removeBlockComment(){
 	wordCnt += 2;
 }
 
+// 英语的部分
 int checkReserver() {
 	if (token=="main") {
 		mapList[top][0] = "MAINTK";
@@ -135,13 +137,32 @@ void Lexical_Analysis_Main() {
 	}
 	else if (isdigit(inputedString[wordCnt]))
 	{
-		while(isdigit(inputedString[wordCnt])) {
-			token += inputedString[wordCnt];
-			wordCnt++;
+        while(isdigit(inputedString[wordCnt])) {
+            token += inputedString[wordCnt];
+            wordCnt++;
+        }
+        mapList[top][0] = "INTCON";
+        mapList[top++][1] = token;
+
+        // if test has float
+        /* bool isFloat = false;
+        while(isdigit(inputedString[wordCnt])||inputedString[wordCnt]=='.') {
+            if(inputedString[wordCnt]=='.')
+                isFloat = true;
+            token += inputedString[wordCnt];
+            wordCnt++;
 		}
-		mapList[top][0] = "INTCON";
-		mapList[top++][1] = token;
-	}
+        if(isFloat)
+        {
+            mapList[top][0] = "Float";
+            mapList[top++][1] = token;
+        }
+        else{
+            mapList[top][0] = "INTCON";
+            mapList[top++][1] = token;
+        } */
+            
+    }
 	else if (inputedString[wordCnt] == '+'){
 		mapList[top][0] = "PLUS";
 		mapList[top++][1] = "+";
@@ -302,18 +323,13 @@ void Lexical_Analysis()
 
 int Syntax_Analysis_Main(bool forward, bool withOutput = false)
 {
-	/* 
-			true, true : 출력하고 앞으로 가기
-			true, false :그냥 앞으로 가기
-			false : 한칸 뒤로가기
-		*/
 	if (forward)
 	{
 		//출력 하고 앞으로 가기
 		if (withOutput && couple[0] != "" && couple[1] != "")
 		{
-				fout << couple[0] << " " << couple[1] << endl;
-				cout << couple[0] << " " << couple[1] << endl;
+            fout << couple[0] << " " << couple[1] << endl;
+            cout << couple[0] << " " << couple[1] << endl;
 		}
 		//끝까지 갔을때 끝내기
 		if (wordCnt >= top)
@@ -330,7 +346,6 @@ int Syntax_Analysis_Main(bool forward, bool withOutput = false)
 			return 1;
 		}
 	}
-	//뒤로가기
 	else
 	{
 		couple[0] = mapList[wordCnt - 2][0];
@@ -342,7 +357,7 @@ int Syntax_Analysis_Main(bool forward, bool withOutput = false)
 
 void primaryExp(){
 	// 1. (EXP)
-	if(couple[0]=="LPARENT")
+	if(couple[1]=="(")
 	{
 		Syntax_Analysis_Main(true, true); //'('출력
 		parseExp(); //EXP로 돌아가기
@@ -353,7 +368,6 @@ void primaryExp(){
 		// 2. number
 		if(couple[1][0]>='0'&&couple[1][0]<='9')
 		{
-			/* int num = stoi(couple[1]); */
 			Syntax_Analysis_Main(true, true);
 			cout << "<Number>" << endl;
 			fout << "<Number>" << endl;
@@ -385,7 +399,7 @@ void unaryExp(){
 	}
 	else if(couple[0]=="IDENFR"&&temp=="(")
 	{
-		// 아직 없음 7. Ident '(' [FuncParams] '); 부분
+		//  Ident '(' [FuncParams] ');
 		Syntax_Analysis_Main(true, true); // Ident 출력
 		Syntax_Analysis_Main(true, true); // ( 출력
 		if(couple[1]!=")")
@@ -399,28 +413,24 @@ void unaryExp(){
 
 void mulExp(){
 	unaryExp();
-	while(couple[0]=="MULT"||couple[0]=="DIV"||couple[0]=="MOD")
+	cout << "<MulExp>" << endl;
+	fout << "<MulExp>" << endl;
+	if(couple[0]=="MULT"||couple[0]=="DIV"||couple[0]=="MOD")
 	{
-		cout << "<MulExp>" << endl;
-		fout << "<MulExp>" << endl;
 		Syntax_Analysis_Main(true, true);
 		unaryExp();
 	}
-	cout << "<MulExp>" << endl;
-	fout << "<MulExp>" << endl;
 }
 
 void addExp(){
 	mulExp();
-	while(couple[0]=="PLUS"||couple[0]=="MINU")
-	{
-		cout << "<AddExp>" << endl;
-		fout << "<AddExp>" << endl;     
-		Syntax_Analysis_Main(true, true);
-		mulExp();
-	}
 	cout << "<AddExp>" << endl;
 	fout << "<AddExp>" << endl;
+	if(couple[0]=="PLUS"||couple[0]=="MINU")
+	{     
+		Syntax_Analysis_Main(true, true);
+		addExp();
+	}
 }
 
 void parseExp(){
@@ -435,116 +445,74 @@ void parseConstExp(){
 	fout << "<ConstExp>" << endl;
 }
 
-void parseReadStmt()
-{
-	Syntax_Analysis_Main(true, true); //getint
-	Syntax_Analysis_Main(true, true); //(
-	Syntax_Analysis_Main(true, true); //)
-}
-
-//return 문일때
-//'return' [Exp] ';' // 1.有Exp 2.无Exp
-
-void parseReturnStmt()
-{
-	Syntax_Analysis_Main(true, true); //return 출력
-	if (couple[0] == "LPARENT") //만약 ( 가 있으면 반환문이 있는것으로 간주,
-	{
-		/* Syntax_Analysis_Main(true, true); // ( 출력 */
-		parseExp(); // return 문의 중 exp부분
-		/* Syntax_Analysis_Main(true, true); // ) 출력 */
-	}
-	//만약 return 문에서 ()없이 그냥 return c가 나왔으면, 
-	else if(couple[0]=="IDENFR" || couple[0]=="INTCON"||couple[0]=="MINU")
-	{
-		parseExp();
-	}
-	//없으면 종료
-}
-
-void parsePrint()
-{
-	Syntax_Analysis_Main(true, true); //printf
-	Syntax_Analysis_Main(true, true); //'('
-	Syntax_Analysis_Main(true, true);//formatString
-
-	while(couple[0] == "COMMA") // ,라면
-	{
-		Syntax_Analysis_Main(true, true); //,출력
-		parseExp();
-	}
-	Syntax_Analysis_Main(true, true); //')'
-}
-
-void parseLVal()
-{
-	Syntax_Analysis_Main(true, true);//IDent 출력;
-	//여기 현재 LBRACE { 라고 되어있는데 암만봐도 LBRACK [같다. 
-	while(couple[1]=="[")
-	{
-		Syntax_Analysis_Main(true, true);//[ 출력
-		parseExp();
-		Syntax_Analysis_Main(true, true); //] 출력
-	}
-	cout << "<LVal>" << endl;
-	fout << "<LVal>" << endl;
-}
-
 // < > <= >=
 void parseRelExp()
 {
 	addExp();
-	while(couple[0]=="LSS"||couple[0]=="LEQ"||couple[0]=="GRE"||couple[0]=="GEQ")
-	{
-		cout << "<RelExp>" << endl;
-		fout << "<RelExp>" << endl;
-		Syntax_Analysis_Main(true, true); // < > <= >=
-		addExp();
-	}
 	cout << "<RelExp>" << endl;
 	fout << "<RelExp>" << endl;
+	if(couple[1]=="<"||couple[1]=="<="||couple[1]==">"||couple[1]==">=")
+	{
+		Syntax_Analysis_Main(true, true); // < > <= >=
+		parseRelExp();
+	}
 }
 
 void parseEqExp()
 {
 	parseRelExp();
-	while(couple[0]=="EQL"||couple[0]=="NEQ")
-	{
-		cout << "<EqExp>" << endl;
-		fout << "<EqExp>" << endl;
-		Syntax_Analysis_Main(true, true); // == !=
-		parseRelExp();
-	}
 	cout << "<EqExp>" << endl;
 	fout << "<EqExp>" << endl;
+	if(couple[1]=="!="||couple[1]=="==")
+	{
+		Syntax_Analysis_Main(true, true); // == !=
+		parseEqExp();
+	}
 }
 
 void parseLAndExp()
 {
 	parseEqExp();
-	while(couple[0]=="AND")
-	{
-		cout << "<LAndExp>" << endl;
-		fout << "<LAndExp>" << endl;
-		Syntax_Analysis_Main(true, true); // &&
-		parseEqExp();
-	}
 	cout << "<LAndExp>" << endl;
 	fout << "<LAndExp>" << endl;
+	if(couple[0]=="AND")
+	{
+		Syntax_Analysis_Main(true, true); // &&
+		parseLAndExp();
+	}
 }
 
 void parseLOrExp()
 {
-	parseLAndExp();
-	while(couple[0]=="OR")
-	{
-		cout << "<LOrExp>" << endl;
-		fout << "<LOrExp>" << endl;
-		Syntax_Analysis_Main(true, true); // ||
-		parseLAndExp();
-	}
-	cout << "<LOrExp>" << endl;
-	fout << "<LOrExp>" << endl;
+    /* 
+    it was passible but grammer is LOrExp → LAndExp | LOrExp '||' LAndExp 
+    so we don't know when we get '||'
+    if grammer was LAndExp LOrExp than it would possible
+
+
+    Syntax_Analysis_Main(true, false);
+    string temp = couple[0];
+    Syntax_Analysis_Main(false, false);
+
+    if(temp=="||")
+    {
+        parseLOrExp();
+        Syntax_Analysis_Main(true, true);
+        parseLAndExp();
+    }
+    else
+        parseLAndExp();
+    
+    cout << "<LOrExp>" << endl;
+    fout << "<LOrExp>" << endl;  */
+    parseLAndExp();
+    cout << "<LOrExp>" << endl;
+    fout << "<LOrExp>" << endl;
+    if(couple[0]=="OR")
+    {
+        Syntax_Analysis_Main(true, true); // ||
+        parseLOrExp();
+    }
 }
 
 void parseCond(){
@@ -581,21 +549,68 @@ void parseFor()
 {
 	Syntax_Analysis_Main(true, true); // for
 	Syntax_Analysis_Main(true, true); // (
-	if(couple[0]!="SEMICN")
-	{
+    if (couple[1] != ";")
+    {
 		parseForStmt();
 	}
 	Syntax_Analysis_Main(true, true); //;
-	if(couple[0]!="SEMICN")
-	{
+    if (couple[1] != ";")
+    {
 		parseCond();
 	}
 	Syntax_Analysis_Main(true, true); // ;
 	if(couple[1]!=")")
+    {
 		parseForStmt();
+    }
 	Syntax_Analysis_Main(true, true);	// )
 	parseStmt();
 }
+
+void parseReadStmt()
+{
+	Syntax_Analysis_Main(true, true); //getint
+	Syntax_Analysis_Main(true, true); //(
+	Syntax_Analysis_Main(true, true); //)
+}
+
+void parseReturnStmt()
+{
+	Syntax_Analysis_Main(true, true); //return 출력
+    if (couple[1] != ";")
+    {
+        parseExp();
+    }
+	//없으면 종료
+}
+
+void parsePrint()
+{
+	Syntax_Analysis_Main(true, true); //printf
+	Syntax_Analysis_Main(true, true); //'('
+	Syntax_Analysis_Main(true, true); //formatString
+
+	while(couple[0] == "COMMA") // ,라면
+	{
+		Syntax_Analysis_Main(true, true); //,출력
+		parseExp();
+	}
+	Syntax_Analysis_Main(true, true); //')'
+}
+
+void parseLVal()
+{
+	Syntax_Analysis_Main(true, true);//IDent 출력; 
+	while(couple[1]=="[")
+	{
+		Syntax_Analysis_Main(true, true);//[ 출력
+		parseExp();
+		Syntax_Analysis_Main(true, true); //] 출력
+	}
+	cout << "<LVal>" << endl;
+	fout << "<LVal>" << endl;
+}
+
 //중요!! 모든 문장을 읽는다. 목표 : 한 문장이 끝날때까지 다시 돌아오면 안된다.
 void parseStmt()
 {
@@ -607,15 +622,13 @@ void parseStmt()
 	{
 		parseFor();
 	}
-	// break,continue, 
 	else if (couple[0] == "BREAKTK" || couple[0] == "CONTINUETK")
 	{
 		Syntax_Analysis_Main(true, true); 
 		Syntax_Analysis_Main(true, true); // ; 출력
 	}
-	//;
-	else if (couple[0] == "SEMICN")
-	{
+    else if (couple[1] == ";")
+    {
 		Syntax_Analysis_Main(true, true); // ; 출력
 	}
 	else if (couple[0] == "RETURNTK")
@@ -629,17 +642,16 @@ void parseStmt()
 		Syntax_Analysis_Main(true, true); // ; 출력
 	}
 	//block
-	else if(couple[0]=="LBRACE")
+	else if(couple[1]=="{")
 	{
 		parseBlock();
 	}
 	// 1. stmt -> LVal = Exp;
 	// 2. stmt -> LVal = getint();
-	// 3 exp; //이게 함수를 부르는 거였네~~
-	// 결국 else는 ident인 상황
+	// 3 exp; 
 	else
 	{
-		//LVel판단
+		//Judge  LVel
 		int index = 0;
 		int isLVal = false;
 		while (true)
@@ -656,7 +668,7 @@ void parseStmt()
 			//오류나면 끝내기
 			if (!Syntax_Analysis_Main(true, false)) break;
 		}
-		//LVal판단하려고 앞으로 간거 다시 초기화
+		//go back for LVal index
 		while(index)
 		{
 			Syntax_Analysis_Main(false, false);
@@ -695,97 +707,42 @@ void parseStmt()
 
 void parseConstInitVal()
 {
-	if(couple[0]=="LBRACE") // { 즉 초기화되는 변수가 배열인 경우
-	{
-		Syntax_Analysis_Main(true, true); // {
-		//만약 2차원 배열인 경우
-		if(couple[0]=="LBRACE")
-		{
-			while(couple[0]=="LBRACE") // { 인 동안
-			{
-				Syntax_Analysis_Main(true, true); // {
-
-				while(couple[0]!="RBRACE")
-				{
-					parseConstExp(); //a=b등 변수로 초기화되면 LVal, a=10처럼 숫자로 초기화 되면 number
-					cout << "<ConstInitVal>" << endl;
-					fout << "<ConstInitVal>" << endl;
-					if(couple[0]=="RBRACE")
-							break;
-
-					Syntax_Analysis_Main(true, true); // ','출력
-				}
-				Syntax_Analysis_Main(true, true); // }
-				cout << "<ConstInitVal>" << endl;
-				fout << "<ConstInitVal>" << endl;
-				if(couple[0]=="COMMA")Syntax_Analysis_Main(true, true); // ','출력
-			}
-
-			Syntax_Analysis_Main(true, true); // }
-		}
-		//1차원 배열인 경우
-		else
-		{    
-			while(couple[0]!="RBRACE")
-			{
-				parseConstExp(); //a=b등 변수로 초기화되면 LVal, a=10처럼 숫자로 초기화 되면 number
-				cout << "<ConstInitVal>" << endl;
-				fout << "<ConstInitVal>" << endl;
-
-				if(couple[0]=="RBRACE")
-					break;
-
-				Syntax_Analysis_Main(true, true); // ','출력
-			}
-			Syntax_Analysis_Main(true, true); // }
-		}
-	}
-	else //일반 변수일 경우
-	{
-		parseConstExp();
-	}
-	fout << "<ConstInitVal>" << endl;
-	cout << "<ConstInitVal>" << endl;
+	if(couple[1]=="{")
+    {
+        Syntax_Analysis_Main(true, true);
+        if(couple[1]!="}")
+        {
+            parseConstInitVal();
+            while(couple[1]==",")
+            {
+                Syntax_Analysis_Main(true, true);
+                parseConstInitVal();
+            }
+        }
+        Syntax_Analysis_Main(true, true);
+    }
+    else
+    {
+        parseConstExp();
+    }
+    fout << "<ConstInitVal>" << endl;
+    cout << "<ConstInitVal>" << endl;
 }
 
 void parseConstDef()
 {
-	//지금이 const. 이 부분이 필요한게, int a,b,c등이면 int가 매번 없어서 출력할필요 없어.
-	if(couple[0]=="CONSTTK")
-	{
-		Syntax_Analysis_Main(true, true); //CONST 출력
-		Syntax_Analysis_Main(true, true); //int 출력
-	}
 	Syntax_Analysis_Main(true, true); //c 출력
 
-	if (couple[0] == "LBRACK") // [ (배열)이면
+	while (couple[1] == "[") // [ (배열)이면
 	{
 		Syntax_Analysis_Main(true, true); // [
 		parseConstExp(); //숫자
 		Syntax_Analysis_Main(true, true); // ]
-		if (couple[0] == "LBRACK") // [ 이면 (2중 배열)
-		{
-			Syntax_Analysis_Main(true, true); //[
-			parseConstExp(); //숫자
-			Syntax_Analysis_Main(true, true); //]
-		}
-
-		//초기화 부분
-		if (couple[0] == "ASSIGN") // =
-		{
-			Syntax_Analysis_Main(true, true); // =
-			parseConstInitVal();
-		}
 	}
-	else // 일반 변수면
-	{
-		if (couple[0] == "ASSIGN") // = 즉 초기화가 있으면
-		{
-			Syntax_Analysis_Main(true, true); // = 출력
-			parseConstInitVal();
-		}
-		//초기화 없으면 생략
-	}
+	
+    Syntax_Analysis_Main(true, true); // = 출력
+    parseConstInitVal();
+		
 	fout << "<ConstDef>" << endl;
 	cout << "<ConstDef>" << endl;
 }
@@ -793,8 +750,12 @@ void parseConstDef()
 // 변수 2: 변수를 처음 선언할때, 모두 입력받고, <ConstDecl>출력
 void parseConstDecl()
 {
+    
+    Syntax_Analysis_Main(true, true); //CONST 출력
+    Syntax_Analysis_Main(true, true); //int 출력
+	
 	parseConstDef();
-	while(couple[0]=="COMMA")// ; 가 나오는동안
+	while(couple[1]==",")// ; 가 나오는동안
 	{
 		if (!Syntax_Analysis_Main(true, true)) break; // 일단 , 출력하고 틀리면 끝내기
 		if (couple[0] == "SEMICN") break;
@@ -809,96 +770,43 @@ void parseConstDecl()
 
 void parseInitVal()
 {
-	if(couple[0]=="LBRACE") // { 즉 초기화되는 변수가 배열인 경우
-	{
-		Syntax_Analysis_Main(true, true); // {
-		//만약 2차원 배열인 경우
-		if(couple[0]=="LBRACE")
-		{
-			while(couple[0]=="LBRACE") // { 인 동안
-			{
-				Syntax_Analysis_Main(true, true); // {
-
-				while(couple[0]!="RBRACE")
-				{
-					parseExp(); //a=b등 변수로 초기화되면 LVal, a=10처럼 숫자로 초기화 되면 number
-
-					fout << "<InitVal>" << endl;
-					cout << "<InitVal>" << endl;
-					if(couple[0]=="RBRACE")
-						break;
-
-					Syntax_Analysis_Main(true, true); // ','출력
-				}
-				Syntax_Analysis_Main(true, true); // }
-				fout << "<InitVal>" << endl;
-				cout << "<InitVal>" << endl;
-				if(couple[0]=="COMMA")Syntax_Analysis_Main(true, true); // ','출력
-			}
-
-			Syntax_Analysis_Main(true, true); // }
-		}
-		//1차원 배열인 경우
-		else
-		{    
-			while(couple[0]!="RBRACE")
-			{
-					parseExp(); //a=b등 변수로 초기화되면 LVal, a=10처럼 숫자로 초기화 되면 number
-					fout << "<InitVal>" << endl;
-					cout << "<InitVal>" << endl;
-
-					if(couple[0]=="RBRACE")
-							break;
-
-					Syntax_Analysis_Main(true, true); // ','출력
-			}
-			Syntax_Analysis_Main(true, true); // }
-		}
-	}
-	else //일반 변수일 경우
-	{
-		parseExp();
-	}
-	fout << "<InitVal>" << endl;
-	cout << "<InitVal>" << endl;
+    if(couple[1]=="{")
+    {
+        Syntax_Analysis_Main(true, true); // {
+        if(couple[1]!="}")
+        {
+            parseInitVal();
+            while(couple[1]==",")
+            {
+                Syntax_Analysis_Main(true, true); // ,
+                parseInitVal();
+            }
+        }
+        Syntax_Analysis_Main(true, true); // }
+    }
+    else
+    {
+        parseExp();
+    }
+    fout << "<InitVal>" << endl;
+    cout << "<InitVal>" << endl;
 }
 
 void parseVarDef()
 {
-	//지금이 int라면. 이 부분이 필요한게, int a,b,c등이면 int가 매번 없어서 출력할필요 없어.
-	if(couple[0]=="INTTK")
-		Syntax_Analysis_Main(true, true); //int 출력
-
 	Syntax_Analysis_Main(true, true); //c 출력
 
-	if (couple[0] == "LBRACK") // [ (배열)이면
+	while (couple[1] == "[") // [ (배열)이면
 	{
 		Syntax_Analysis_Main(true, true); // [
 		parseConstExp(); //숫자
 		Syntax_Analysis_Main(true, true); // ]
-		if (couple[0] == "LBRACK") // [ 이면 (2중 배열)
-		{
-			Syntax_Analysis_Main(true, true); //[
-			parseConstExp(); //숫자
-			Syntax_Analysis_Main(true, true); //]
-		}
-
-		//초기화 부분
-		if (couple[0] == "ASSIGN") // =
-		{
-			Syntax_Analysis_Main(true, true); // =
-			parseInitVal();
-		}
 	}
-	else // 일반 변수면
-	{
-		if (couple[0] == "ASSIGN") // = 즉 초기화가 있으면
-		{
-			Syntax_Analysis_Main(true, true); // = 출력
-			parseInitVal();
-		}
-		//초기화 없으면 생략
-	}
+    if (couple[1] == "=") // = 즉 초기화가 있으면
+    {
+        Syntax_Analysis_Main(true, true); // = 출력
+        parseInitVal();
+    }
 	fout << "<VarDef>" << endl;
 	cout << "<VarDef>" << endl;
 }
@@ -906,8 +814,10 @@ void parseVarDef()
 // 변수 2: 변수를 처음 선언할때, 모두 입력받고, <VarDecl>출력
 void parseVarDecl()
 {
+    Syntax_Analysis_Main(true, true); //int 출력
+
 	parseVarDef();
-	while(couple[0]=="COMMA")// ; 가 나오는동안
+	while(couple[1]==",")// ; 가 나오는동안
 	{
 		if (!Syntax_Analysis_Main(true, true)) break; // 일단 , 출력하고 틀리면 끝내기
 		if (couple[0] == "SEMICN") break;
@@ -955,7 +865,7 @@ void parseBlock()
 void parseFuncRParams()
 {
 	parseExp();
-	while (couple[0] == "COMMA") // , 가 나오는동안
+	while (couple[1] == ",") // , 가 나오는동안
 	{
 		if (!Syntax_Analysis_Main(true, true)) break; // 일단 , 출력하고 틀리면 끝내기
 
@@ -965,15 +875,16 @@ void parseFuncRParams()
 	cout << "<FuncRParams>" << endl;
 }
 
-void parseFuncParam()
+void parseFuncFParam()
 {
 	Syntax_Analysis_Main(true, true); //int
 	Syntax_Analysis_Main(true, true); //ident
-	if(couple[0]=="LBRACK") // [ 라면, 즉 배열이라면
+	if(couple[1]=="[") // [ 라면, 즉 배열이라면
 	{	
 		Syntax_Analysis_Main(true, true);//배열 [
 		Syntax_Analysis_Main(true, true);// ]
-		if(couple[0]=="LBRACK")
+        //2 혹은 3,4,5,6...
+		while(couple[1]=="[") // [
 		{
 			Syntax_Analysis_Main(true, true);// [
 			parseConstExp();
@@ -984,14 +895,14 @@ void parseFuncParam()
 	cout << "<FuncFParam>" << endl;
 }
 
-void parseFuncParams()
+void parseFuncFParams()
 {
-	parseFuncParam();
+	parseFuncFParam();
 	while(couple[0]=="COMMA")// ; 가 나오는동안
 	{
 		if (!Syntax_Analysis_Main(true, true)) break; // 일단 , 출력하고 틀리면 끝내기
 
-		parseFuncParam();
+		parseFuncFParam();
 	}
 	fout << "<FuncFParams>" << endl; 
 	cout << "<FuncFParams>" << endl;
@@ -1006,7 +917,7 @@ void parseFuncDef()
 	Syntax_Analysis_Main(true, true); // Ident : 함수이름
 	Syntax_Analysis_Main(true, true); // '('
 	if(couple[0]!="RPARENT")
-		parseFuncParams();
+		parseFuncFParams();
 	Syntax_Analysis_Main(true, true); // ')'
 	parseBlock();
 
@@ -1032,13 +943,13 @@ void parseCompUnit()
 {
 	string temp1 = couple[0];
 	Syntax_Analysis_Main(true, false);
-	string temp2 = couple[0];
+	string isMain = couple[0];
 	Syntax_Analysis_Main(true, false);
 	string temp3 = couple[0];
 	Syntax_Analysis_Main(false, false);
 	Syntax_Analysis_Main(false, false);
 	// 메인 함수라면
-	if(temp1=="INTTK"&&temp2=="MAINTK")
+	if(temp1=="INTTK"&&isMain=="MAINTK")
 	{
 		parseMainFunc();
 		fout << "<CompUnit>" << endl;
@@ -1063,12 +974,12 @@ void Syntax_Analysis(){
 	wordCnt = 0;
 	if (Syntax_Analysis_Main(true, true))
 	{
-			parseCompUnit();
+        parseCompUnit();
 	}
 }
 
 int main(void) {
-    init();
+  init(); 
   Lexical_Analysis();
   Syntax_Analysis();
 
@@ -1076,3 +987,110 @@ int main(void) {
   fout.close();
   return 0;
 }
+
+/*
+****  initVal is a good example of [], {}, | ****
+
+{} : fanfu more than 0
+ex : FuncFParams -> FuncFParam{ ',' FuncParam } // if this
+while(couple[1]==",")
+{
+    if(!Syntex_Analysis_Main(true,true)) break;
+    ParseFuncFParam();
+}
+fout<<"<FuncFParams>"<<endl;
+// daima is this. 
+
+
+
+문법
+ // 0-> 1.是否存在Decl 2.是否存在FuncDef
+编译单元 CompUnit → {Decl} {FuncDef} MainFuncDef
+
+// 1<-0 覆盖两种声明
+声明 Decl → ConstDecl | VarDecl
+基本类型 BType → 'int' // 存在即可
+
+//ConstDecl부분
+// 2<-1 1.花括号内重复0 次 2.花括号内重复多次
+常量声明 ConstDecl → 'const' BType ConstDef { ',' ConstDef } ';'
+// 3<-2 변수, 1차원, 2차원 배열을 포함
+常数定义 ConstDef → Ident { '[' ConstExp ']' } '=' ConstInitVal
+// 4<-3 위에서 선언한 변수, 1차원, 2차원 배열을 초기화
+常量初值 ConstInitVal → ConstExp | '{' [ ConstInitVal { ',' ConstInitVal } ] '}'
+
+// 5<-1 1花括号内重复0次 2.花括号内重复多次
+变量声明 VarDecl → BType VarDef { ',' VarDef } ';'
+// 包含普通变量、一维数组、二维数组定义
+变量定义 VarDef → Ident { '[' ConstExp ']' } | Ident { '[' ConstExp ']' } '=' InitVal
+// 1.表达式初值 2.一维数 组初值 3.二维数组初值
+变量初值 InitVal → Exp | '{' [ InitVal { ',' InitVal } ] '}'
+ -> a. Exp : 1
+ -> b. { Exp } : {1}
+ -> c. { Exp, Exp ... } : { 1, 2, 3 }
+ -> d. { initVal } -> {{ InitVal }} -> {{Exp}} : {{1,2}}
+ -> e.                {{ InitVal }} -> {{Exp,Exp...}} : {{1,2},{3,4}}
+
+
+// 0. 메인 함수
+主函数定义 MainFuncDef → 'int' 'main' '(' ')' Block
+
+// 일반 함수
+函数定义 FuncDef → FuncType Ident '(' [FuncFParams] ')' Block // 1.无形参 2.有形参
+// 覆盖两种类型的函数
+函数类型 FuncType → 'void' | 'int'
+// 1. 1.花括号内重复0次 2.花括号内重复多次
+函数形参表 FuncFParams → FuncFParam { ',' FuncFParam }
+// 1.普通变量 2.一维数组变量 3.二维数组变量<- 이거안함
+函数形参 FuncFParam → BType Ident ['[' ']' { '[' ConstExp ']' }]
+
+
+
+
+// 1.花括号内重复0次 2.花括号内重复多次
+语句块 Block → '{' { BlockItem } '}'
+// 覆盖两种语句块项
+语句块项 BlockItem → Decl | Stmt
+
+// 每种类型的语句都要覆盖
+语句 Stmt →
+LVal '=' Exp ';'
+| [Exp] ';' //有无Exp两种情况
+| Block
+| 'if' '(' Cond ')' Stmt [ 'else' Stmt ] // 1.有else 2.无else
+//1. 无缺省 2. 缺省第一个 ForStmt 3. 缺省Cond 4. 缺省第二个ForStmt
+| 'for' '(' [ForStmt] ';' [Cond] ';' [ForStmt] ')' Stmt
+| 'break' ';' | 'continue' ';'
+| 'return' [Exp] ';' // 1.有Exp 2.无Exp
+| LVal '=' 'getint''('')'';'
+| 'printf''('FormatString{','Exp}')'';' // 1.有Exp 2.无Exp
+
+语句 ForStmt → LVal '=' Exp // 存在即可
+表达式 Exp → AddExp 注:SysY 表达式是int 型表达式 // 存在即可
+条件表达式 Cond → LOrExp // 存在即可
+// 1.普通变量 2.一维数组 3.二维数组
+左值表达式 LVal → Ident {'[' Exp ']'}
+
+// 3
+// 三种情况均需覆盖
+基本表达式 PrimaryExp → '(' Exp ')' | LVal | Number
+数值 Number → IntConst // 存在即可
+
+// 3种情况均需覆盖,函数调用也需要覆盖FuncRParams的不同情况
+一元表达式 UnaryExp → PrimaryExp | Ident '(' [FuncRParams] ')' | UnaryOp UnaryExp // 存在即可
+单目运算符 UnaryOp → '+' | '−' | '!' 注:'!'仅出现在条件表达式中 // 三种均需覆盖
+// 1.花括号内重复0次 2.花括号内重复多次 3.Exp需要覆盖数组传参和部分数组传参
+函数实参表 FuncRParams → Exp { ',' Exp }
+
+
+// 1// 1.UnaryExp 2.* 3./ 4.% 均需覆盖
+乘除模表达式 MulExp → UnaryExp | MulExp ('*' | '/' | '%') UnaryExp
+加减表达式 AddExp → MulExp | AddExp ('+' | '−') MulExp // 1.MulExp 2.+ 需覆盖 3.- 需 覆盖
+
+关系表达式 RelExp → AddExp | RelExp ('<' | '>' | '<=' | '>=') AddExp // 1.AddExp 2.< 3.> 4.<= 5.>= 均需覆盖
+相等性表达式 EqExp → RelExp | EqExp ('==' | '!=') RelExp // 1.RelExp 2.== 3.!= 均需 覆盖
+
+逻辑与表达式 LAndExp → EqExp | LAndExp '&&' EqExp // 1.EqExp 2.&& 均需覆盖
+逻辑或表达式 LOrExp → LAndExp | LOrExp '||' LAndExp // 1.LAndExp 2.|| 均需覆盖
+常量表达式 ConstExp → AddExp 注:使用的Ident 必须是常量 // 存在即可
+ */
