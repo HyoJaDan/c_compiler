@@ -31,6 +31,7 @@ void parseErrorJ();
 void parseErrorK();
 
 FILE *inputFile;
+ifstream inFile("input.txt");
 ofstream fout("output.txt");
 ofstream errorOut("error.txt");
 
@@ -40,9 +41,13 @@ string inputedString="";
 int inputedStringLength = 0;
 int num;
 int global_line;
+/* l, printf오류를 위한 변수 */
 int lastNonTerminalLine = 0;
+/* m, break,comtinue가 순환이 아닌 변수에서 나올때를 위한 변수 */
 bool isCirculer[100] = {false};
+/* g, 함수에 return 이 없을때 를위한변수 */
 bool isReturnCalled=false;
+
 bool isCameFromParam = false;
 int blocks[100000] = {0};
 int blocksTop = 0;
@@ -109,8 +114,8 @@ void insertWordList(string label, string idenfr)
 
 void init()
 {
-  char inputString[500];
-  inputFile = fopen("testfile.txt", "r");
+    char inputString[500];
+    inputFile = fopen("testfile.txt", "r");
 	int line = 0;
 	while (fgets(inputString, sizeof(inputString), inputFile) != NULL)
 	{
@@ -120,7 +125,7 @@ void init()
 		inputedString += line_string;
 		inputedString += inputString;
 	}
-  inputedStringLength = inputedString.length();
+    inputedStringLength = inputedString.length();
 }
 
 bool parsingAnnotation() {
@@ -220,6 +225,23 @@ void Lexical_Analysis_Main() {
 			insertWordList("IDENFR", token);
 		}
 	}
+     // if test has float
+        /* bool isFloat = false;
+        while(isdigit(inputedString[wordCnt])||inputedString[wordCnt]=='.') {
+            if(inputedString[wordCnt]=='.')
+                isFloat = true;
+            token += inputedString[wordCnt];
+            wordCnt++;
+		}
+        if(isFloat)
+        {
+            mapList[top][0] = "Float";
+            mapList[top++][1] = token;
+        }
+        else{
+            mapList[top][0] = "INTCON";
+            mapList[top++][1] = token;
+        } */
 	else if (isdigit(inputedString[wordCnt]))
 	{
 		while(isdigit(inputedString[wordCnt])) {
@@ -472,7 +494,9 @@ int unaryExp(int type){
 				parseFuncRParams(funcInfo);
 			}
 		}
-
+        //원래 함수에는 인자가 있는데 지금은 )인 경우
+        else if (funcInfo.paramNum > 0 && wordNow.idenfr == ")")
+            error(wordNow.lineId, "d");
 		// ()가 잘 닫히는지 확인하는 오류. 함수에서 )까지 출력한다.
 		parseErrorJ();
 	}
@@ -924,24 +948,24 @@ void parseInitVal()
 {
     if(wordNow.idenfr=="{")
     {
-			Syntax_Analysis_Main(true, true); // {
-			if(wordNow.idenfr!="}")
-			{
-					parseInitVal();
-					while(wordNow.idenfr==",")
-					{
-						Syntax_Analysis_Main(true, true); // ,
-						parseInitVal();
-					}
-			}
-			Syntax_Analysis_Main(true, true); // }
+        Syntax_Analysis_Main(true, true); // {
+        if(wordNow.idenfr!="}")
+        {
+            parseInitVal();
+            while(wordNow.idenfr==",")
+            {
+                Syntax_Analysis_Main(true, true); // ,
+                parseInitVal();
+            }
+        }
+        Syntax_Analysis_Main(true, true); // }
     }
     else
     {
-			parseExp();
+        parseExp();
     }
 
-		outputSyntax_Analysis("InitVal");
+    outputSyntax_Analysis("InitVal");
 }
 
 void parseVarDef()
@@ -1156,10 +1180,11 @@ void parseFuncDef()
 	lastNonTerminalLine = wordNow.lineId;
 	//여기서 레벨업해야지 인자가 한단계 높게 설정된다.
 	levelUp();
-
-	Syntax_Analysis_Main(true, true); // '('
-	// 두번째는 )가 없을때 바로 {가 나올테니 그걸 노린 에러
-	if(wordNow.label!="RPARENT" && wordNow.idenfr != "{")
+    isCameFromParam = true;
+    
+    Syntax_Analysis_Main(true, true); // '('
+    // 두번째는 )가 없을때 바로 {가 나올테니 그걸 노린 에러
+    if(wordNow.label!="RPARENT" && wordNow.idenfr != "{")
 		parseFuncFParams();
 	
 	// ()가 잘 닫히는지 확인하는 오류. 함수에서 )까지 출력한다.
@@ -1318,8 +1343,10 @@ void parseErrorH(string idenfr, int lineID)
 			{
 				error(lineID, "h");
 			}
-		}
-	}
+            else
+                return;
+        }
+    }
 }
 
 /** 선언안된 변수 */
@@ -1339,14 +1366,39 @@ int parseErrorC(string idenfr, int lineID)
 /** 변수 겹침 */
 bool parseErrorB(string idenfr, int lineID)
 {
-	for (int i = symbolTableTop; i > blocks[blocksTop-1]; i--)
-	{
-		if (idenfr == symbolTable[i].idenfr && symbolTable[i].level == levelNow)
-		{
-			error(lineID, "b");
-			return 1;
-		}
-	} 
+    if(blocksTop==0)
+    {
+        for (int i = symbolTableTop; i >= 0; i--)
+        {
+            if (idenfr == symbolTable[i].idenfr && symbolTable[i].level == levelNow)
+            {
+                error(lineID, "b");
+                return 1;
+            }
+        } 
+    }
+    else if (levelNow == 0)
+    {
+        for (int i = symbolTableTop; i >= 0; i--)
+        {
+            if (idenfr == symbolTable[i].idenfr && symbolTable[i].level == levelNow)
+            {
+                error(lineID, "b");
+                return 1;
+            }
+        }
+    }
+    else
+    {
+        for (int i = symbolTableTop; i > blocks[blocksTop - 1]; i--)
+        {
+            if (idenfr == symbolTable[i].idenfr && symbolTable[i].level == levelNow)
+            {
+                error(lineID, "b");
+                return 1;
+            }
+        }
+    }
 	return 0;
 }
 
@@ -1396,15 +1448,15 @@ void outputError()
 	}
 }
 
-
 int main(void) {
-  init(); 
-  Lexical_Analysis();
-  Syntax_Analysis();
-	outputError();
+    init(); 
+    Lexical_Analysis();
+    Syntax_Analysis();
+    outputError();
 
-	fclose(inputFile);
-	fout.close();
-	errorOut.close();
-  return 0;
+    fclose(inputFile);
+    inFile.close();
+    fout.close();
+    errorOut.close();
+    return 0;
 }
