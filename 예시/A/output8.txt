@@ -1,0 +1,16 @@
+
+int main() {
+	printf("\n");
+	int n = 10;
+	for (;n;) {
+		n = n - 1;
+		printf("%d   ",n);
+		if (n < 6) {
+			continue;
+			printf("Continue is error!\n");
+		}
+		if (n == 3) {
+			break;
+		}
+	}
+}

@@ -1,0 +1,14 @@
+
+    printf("7\n");
+    j=0;
+	for(;;j=j+1){
+        printf("%d",j);
+        if(j>4)break;
+	}
+
+    printf("8\n");
+	for(;;){
+        printf(";;");
+        break;
+	}
+    printf("DONE");
