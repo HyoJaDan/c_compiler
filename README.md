@@ -13,6 +13,5 @@
 
 문서를 읽지 않고, 빠르게 실행시키고 싶으시다면 마지막 부분인 코드 생성 부분의 코드를 가져와서, `input.txt`와 `testfile.txt`에 위에 업로드해둔 `‘예시’` 파일의 값을 각각 하나씩 넣고, 코드 실행 결과인 `pcoderesult.txt`와 문법 분석 결과인 `output.txt`, 에러는`error.txt`의 결과를 보시면 됩니다.<br>
 https://drive.google.com/file/d/1B10-Q9Nrx77F8sw-5TjSa0JLthWqOfJ1/view?usp=drive_link<br>
-https://drive.google.com/file/d/15CjCGHc4rkwUnX_5XJkIVHnBlhe3pHbk/view<br>
 이 링크를 클릭하시면 자세한 설명 문서를 볼수 있습니다. <br>
 설명 문서.pdf를 보셔도 됩니다.
